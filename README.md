@@ -55,8 +55,9 @@ void loop() {
     delay(500);  // Wait for half a second
 }
 ```
-
 ---
+
+<img align="right" alt="" width="45%" src="https://github.com/user-attachments/assets/e9f796ee-13ad-4f3b-8cc4-2a74aa05f29b">
 
 ### **How It Works:**
 1. The code initializes **I2C communication** using the `Wire` library.
@@ -72,8 +73,6 @@ void loop() {
 2. Open **Serial Monitor** (`Tools > Serial Monitor`).
 3. Set **baud rate** to `9600`.
 4. Move/rotate the **MPU6050**, and you should see gyroscope readings change.
-
-![gyroscope1](https://github.com/user-attachments/assets/e9f796ee-13ad-4f3b-8cc4-2a74aa05f29b)
 
 ---
 
