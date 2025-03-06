@@ -228,7 +228,7 @@ https://github.com/user-attachments/assets/e2513c7b-a7df-48af-a298-d77224926220
 
 ---
 
-# **real-time moving rectangle** that reacts to your MPU6050 movements, like a **drone simulation**.
+# **Real-time moving rectangle** that reacts to your MPU6050 movements, like a **drone simulation**.
 
 [![Screenshot (154)](https://github.com/user-attachments/assets/8164d561-42fa-46dd-b8dc-cf41c096a046)](https://processing.org/download)  
 
@@ -244,6 +244,8 @@ Since the **Serial Monitor** only displays text, it **cannot show graphical move
 3. **Install the `Serial` Library in Processing** (It's built-in)
 
 ---
+
+# 2D simulation
 
 ### **Step 1: Upload This Code to Arduino Nano**
 This code **reads MPU6050 data** and **sends it to the PC** via Serial.
@@ -339,5 +341,193 @@ void draw() {
 ### **📌 How to Run This?**
 1. **Upload the Arduino code** to your Nano.  
 2. **Open Processing** and **paste the Processing code** above.  
-3. **Run the Processing Sketch** → You’ll see a **rectangle moving with your MPU6050**!  
+3. **Run the Processing Sketch** → You’ll see a **rectangle moving with your MPU6050**!
 
+https://github.com/user-attachments/assets/e98f0834-b109-47a6-a3ed-fbd38ad1b027
+
+---
+
+# 3D simulation
+
+---
+
+### **🛠 What We Will Do:**
+✅ **Use Processing** to create a **3D cube (or drone shape)**  
+✅ **Use MPU6050 data** to control **pitch, roll, and yaw**  
+✅ **Display real-time movement** that matches your hand motion  
+
+---
+
+### **Step 1: Upload This Code to Arduino Nano**
+This code **reads** the **gyro data** from the MPU6050 and **sends it over Serial**.  
+
+```cpp
+#include <Wire.h>
+
+const int MPU6050_ADDR = 0x68;
+int16_t gyro_x, gyro_y, gyro_z;
+
+void setup() {
+    Serial.begin(115200);
+    Wire.begin();
+
+    Wire.beginTransmission(MPU6050_ADDR);
+    Wire.write(0x6B);
+    Wire.write(0);
+    Wire.endTransmission(true);
+}
+
+void loop() {
+    Wire.beginTransmission(MPU6050_ADDR);
+    Wire.write(0x43);  
+    Wire.endTransmission(false);
+    Wire.requestFrom(MPU6050_ADDR, 6, true);
+
+    gyro_x = (Wire.read() << 8) | Wire.read();
+    gyro_y = (Wire.read() << 8) | Wire.read();
+    gyro_z = (Wire.read() << 8) | Wire.read();
+
+    // Scale values for smooth rotation
+    float scaled_x = gyro_x / 150.0;
+    float scaled_y = gyro_y / 150.0;
+    float scaled_z = gyro_z / 150.0;
+
+    Serial.print(scaled_x);
+    Serial.print(",");
+    Serial.print(scaled_y);
+    Serial.print(",");
+    Serial.println(scaled_z);
+
+    delay(50);
+}
+```
+
+---
+
+### **Step 2: Run This 3D Simulation in Processing**
+We use **Processing + PeasyCam** to create a **real-time 3D cube (drone) simulation**.  
+
+```java
+import processing.serial.*;
+import peasy.*;
+
+Serial port;
+PeasyCam cam;
+float roll = 0, pitch = 0, yaw = 0;
+
+void setup() {
+  size(800, 800, P3D);
+  cam = new PeasyCam(this, 500);
+  port = new Serial(this, Serial.list()[0], 115200);
+}
+
+void draw() {
+  background(0);
+  lights();
+  
+  translate(0, 0, 0);
+  rotateX(radians(pitch));
+  rotateY(radians(yaw));
+  rotateZ(radians(roll));
+  
+  fill(0, 255, 0);
+  stroke(255);
+  
+  box(100);  // 3D Cube (Can be replaced with a drone model)
+  
+  while (port.available() > 0) {
+    String data = port.readStringUntil('\n');
+    if (data != null) {
+      data = trim(data);
+      String[] values = split(data, ',');
+      if (values.length == 3) {
+        roll = float(values[0]);
+        pitch = float(values[1]);
+        yaw = float(values[2]);
+      }
+    }
+  }
+}
+```
+
+---
+
+### **🚀 What Happens Here**
+- The **Arduino reads** **pitch, roll, yaw** and sends it via Serial.  
+- **Processing reads the values** and applies them to a **3D cube (your drone model)**.  
+- The cube **tilts, rotates, and moves** like your **real MPU6050 sensor!**  
+
+---
+
+### **📌 How to Run This**
+1. **Upload the Arduino code** to your Nano.  
+2. **Install Processing** ([Download Here](https://processing.org/download))  
+3. **Install PeasyCam Library** (Go to `Sketch > Import Library > Add Library > Search "PeasyCam" > Install`)  
+4. **Run the Processing Sketch**  
+5. **Move your MPU6050** → Watch the **3D cube tilt, turn, and rotate** in real-time!
+
+---
+
+### If You get error with Add Library
+
+If you're missing the **PeasyCam library** in Processing. Let's fix that.  
+
+---
+
+### **✅ Fix: Install PeasyCam in Processing**
+1. Open **Processing IDE**.  
+2. Go to **Sketch > Import Library > Add Library**.  
+3. In the search bar, type **"PeasyCam"**.  
+4. Click **Install** and wait for it to complete.  
+5. Restart Processing and try running the code again.  
+
+---
+
+### **🛠 Alternative Without PeasyCam (Using Manual 3D Rotation)**
+If you want a **simple version without PeasyCam**, replace the code with this:
+
+```java
+import processing.serial.*;
+
+Serial port;
+float roll = 0, pitch = 0, yaw = 0;
+
+void setup() {
+  size(800, 800, P3D);
+  port = new Serial(this, Serial.list()[0], 115200);
+}
+
+void draw() {
+  background(0);
+  lights();
+
+  translate(width / 2, height / 2, 0);
+  rotateX(radians(pitch));
+  rotateY(radians(yaw));
+  rotateZ(radians(roll));
+
+  fill(0, 255, 0);
+  stroke(255);
+  box(100);  // 3D Cube
+
+  while (port.available() > 0) {
+    String data = port.readStringUntil('\n');
+    if (data != null) {
+      data = trim(data);
+      String[] values = split(data, ',');
+      if (values.length == 3) {
+        roll = float(values[0]);
+        pitch = float(values[1]);
+        yaw = float(values[2]);
+      }
+    }
+  }
+}
+```
+
+### **📌 How This Works**
+- **Removes PeasyCam** but keeps the **3D movement.**  
+- Uses **rotateX(), rotateY(), rotateZ()** for real-time rotation.  
+- Cube moves **based on MPU6050 data** like a drone.
+
+https://github.com/user-attachments/assets/dcd72a90-6dd1-469e-a8ad-ff456e0b5d66
