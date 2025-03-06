@@ -226,4 +226,118 @@ https://github.com/user-attachments/assets/e2513c7b-a7df-48af-a298-d77224926220
 - **Bars (`+` and `-`)** show direction and intensity of movement.  
 - `" > "` means positive movement, `" < "` means negative movement.
 
+---
+
+# **real-time moving rectangle** that reacts to your MPU6050 movements, like a **drone simulation**.
+
+[![Screenshot (154)](https://github.com/user-attachments/assets/8164d561-42fa-46dd-b8dc-cf41c096a046)](https://processing.org/download)  
+
+🚀 **why not in Adrino IDE ?**  
+Since the **Serial Monitor** only displays text, it **cannot show graphical movement** directly.  
+✅ Instead, I will create a **Processing sketch** (a program that runs on your PC) to visualize the rectangle moving based on your hand movements!  
+
+---
+
+### **🛠 SetUp**
+1. **Arduino Nano + MPU6050** (with I2C connected)
+2. **Processing IDE** (Download from [processing.org](https://processing.org/))
+3. **Install the `Serial` Library in Processing** (It's built-in)
+
+---
+
+### **Step 1: Upload This Code to Arduino Nano**
+This code **reads MPU6050 data** and **sends it to the PC** via Serial.
+```cpp
+#include <Wire.h>
+
+const int MPU6050_ADDR = 0x68;
+int16_t gyro_x, gyro_y;
+
+void setup() {
+    Serial.begin(115200);  
+    Wire.begin();  
+
+    Wire.beginTransmission(MPU6050_ADDR);
+    Wire.write(0x6B);  
+    Wire.write(0);  
+    Wire.endTransmission(true);
+}
+
+void loop() {
+    Wire.beginTransmission(MPU6050_ADDR);
+    Wire.write(0x43);  
+    Wire.endTransmission(false);
+    Wire.requestFrom(MPU6050_ADDR, 4, true);  
+
+    gyro_x = (Wire.read() << 8) | Wire.read();
+    gyro_y = (Wire.read() << 8) | Wire.read();
+
+    // Scale values for better control
+    int scaled_x = map(gyro_x, -15000, 15000, -10, 10);
+    int scaled_y = map(gyro_y, -15000, 15000, -10, 10);
+
+    Serial.print(scaled_x);
+    Serial.print(",");
+    Serial.println(scaled_y);
+
+    delay(50);  
+}
+```
+---
+
+### **Step 2: Run This Code in Processing**
+Processing **receives Serial data** and **moves a rectangle** based on your hand movement.  
+
+```java
+import processing.serial.*;
+
+Serial port;  
+int rectX, rectY;  
+
+void setup() {
+  size(600, 600);  
+  port = new Serial(this, Serial.list()[0], 115200);  // Adjust port if needed
+  rectX = width / 2;
+  rectY = height / 2;
+}
+
+void draw() {
+  background(0);
+  fill(255, 0, 0);
+  rect(rectX, rectY, 50, 50);
+
+  while (port.available() > 0) {
+    String data = port.readStringUntil('\n');
+    if (data != null) {
+      data = trim(data);
+      String[] values = split(data, ',');
+      if (values.length == 2) {
+        int moveX = int(values[0]);
+        int moveY = int(values[1]);
+
+        rectX += moveX;
+        rectY += moveY;
+
+        // Keep rectangle inside window
+        rectX = constrain(rectX, 0, width - 50);
+        rectY = constrain(rectY, 0, height - 50);
+      }
+    }
+  }
+}
+```
+
+---
+
+### **🚀 How It Works**
+- The **Arduino reads gyroscope values** and sends **scaled X, Y movement** via Serial.  
+- **Processing receives these values** and moves a **rectangle** on the screen.  
+- **When you tilt the MPU6050**, the rectangle **moves like a drone**!
+
+---
+
+### **📌 How to Run This?**
+1. **Upload the Arduino code** to your Nano.  
+2. **Open Processing** and **paste the Processing code** above.  
+3. **Run the Processing Sketch** → You’ll see a **rectangle moving with your MPU6050**!  
 
