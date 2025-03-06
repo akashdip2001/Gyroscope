@@ -76,9 +76,8 @@ void loop() {
 
 ---
 
-✅ Formatting the output cleanly  
-✅ Adding a simple **visual representation** using text-based bars  
-✅ Including a **scaled version** of gyroscope values for better readability  
+## ✅ Formatting the output cleanly  
+### ✅ Adding a simple **visual representation** using text-based bars  
 
 ---
 
@@ -150,36 +149,81 @@ void drawBar(int value) {
 }
 ```
 
----
-
-### **Improvements in this Code**
-1. **Clear headings & separators** for better readability  
-2. **Gyroscope values scaled down** so they don’t show huge numbers  
-3. **Text-based bars (`+` and `-`)** to visually represent sensor movement  
-
----
-
-### **Example Output in Serial Monitor**
-```
-MPU6050 Gyroscope Test Initialized...
-Move the sensor to see changes in gyro values!
-------------------------------------------------
-------------------------------------------------
-Gyro X: 1200 | Y: -800 | Z: 400
-X-axis: > [+++++++]
-Y-axis: [----] <
-Z-axis: > [++]
-------------------------------------------------
-Gyro X: 200 | Y: -1600 | Z: 800
-X-axis: > [+]
-Y-axis: [--------] <
-Z-axis: > [++++]
-------------------------------------------------
-```
-
 https://github.com/user-attachments/assets/749e4a5e-e083-4781-97d1-cd391a4db0f7
+
+```cpp
+#include <Wire.h>
+
+const int MPU6050_ADDR = 0x68;  // MPU6050 I2C address
+int16_t gyro_x, gyro_y, gyro_z;
+
+void setup() {
+    Serial.begin(9600);  // Start Serial Monitor
+    Wire.begin();        // Start I2C communication
+
+    // Wake up MPU6050
+    Wire.beginTransmission(MPU6050_ADDR);
+    Wire.write(0x6B);  // PWR_MGMT_1 register
+    Wire.write(0);     // Set to zero (wakes up MPU6050)
+    Wire.endTransmission(true);
+
+    Serial.println("MPU6050 Drone Simulation Initialized...");
+    Serial.println("Move the sensor to see directional changes!");
+}
+
+void loop() {
+    // Request gyroscope data
+    Wire.beginTransmission(MPU6050_ADDR);
+    Wire.write(0x43); // Starting register for gyro data
+    Wire.endTransmission(false);
+    Wire.requestFrom(MPU6050_ADDR, 6, true); // Request 6 bytes
+
+    // Read gyroscope values
+    gyro_x = (Wire.read() << 8) | Wire.read();
+    gyro_y = (Wire.read() << 8) | Wire.read();
+    gyro_z = (Wire.read() << 8) | Wire.read();
+
+    // Define thresholds for movement
+    int threshold = 800;  // Adjust based on sensitivity
+
+    Serial.println("\n------------------------------");
+    Serial.println("          DRONE STATUS        ");
+    Serial.println("------------------------------");
+
+    // Determine movement direction
+    if (gyro_x > threshold) {
+        Serial.println("➡️  Moving RIGHT");
+    } else if (gyro_x < -threshold) {
+        Serial.println("⬅️  Moving LEFT");
+    }
+
+    if (gyro_y > threshold) {
+        Serial.println("⬆️  Moving FORWARD");
+    } else if (gyro_y < -threshold) {
+        Serial.println("⬇️  Moving BACKWARD");
+    }
+
+    if (gyro_z > threshold) {
+        Serial.println("↻ Rotating CLOCKWISE");
+    } else if (gyro_z < -threshold) {
+        Serial.println("↺ Rotating COUNTERCLOCKWISE");
+    }
+
+    if (gyro_x < threshold && gyro_x > -threshold && 
+        gyro_y < threshold && gyro_y > -threshold && 
+        gyro_z < threshold && gyro_z > -threshold) {
+        Serial.println("✈️  Drone is STABLE");
+    }
+
+    delay(500);  // Update every 500ms
+}
+```
+
+https://github.com/user-attachments/assets/e2513c7b-a7df-48af-a298-d77224926220
 
 ✅ **How to Read Output Easily?**  
 - **Numbers** show actual gyro values.  
 - **Bars (`+` and `-`)** show direction and intensity of movement.  
-- `" > "` means positive movement, `" < "` means negative movement.  
+- `" > "` means positive movement, `" < "` means negative movement.
+
+
