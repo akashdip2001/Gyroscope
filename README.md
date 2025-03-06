@@ -1,4 +1,4 @@
-# Gyroscope
+# Gyroscope module check
 
 **MPU6050**, which is a common IMU (Inertial Measurement Unit) sensor with a gyroscope and accelerometer. Below is an **Arduino Nano** program to check whether the **gyroscope** is working. It reads **gyroscope data** (X, Y, Z) from the MPU6050 and prints it to the **Serial Monitor**.
 
